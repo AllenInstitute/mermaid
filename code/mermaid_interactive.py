@@ -226,8 +226,8 @@ if result.get("entity_clicked"):
         )
     else:
         st.write("No URL available for this node")
+    # dsplay the notes, if available
     if note and note != '#':
-        
         st.markdown(
             f'**Notes:** {note}',
         )
