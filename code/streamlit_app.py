@@ -14,6 +14,7 @@ def create_sample_data():
         'From_Label': ['Project Start', 'Project Start', 'Analysis', 'Review'],
         'To_ID': ['B', 'C', 'D', 'E'],
         'To_Label': ['Data Collection', 'Analysis', 'Review', 'Final Report'],
+        'Connector': ['---', '-- some text -->', '-.->', '<-->'], # see https://mermaid.js.org/syntax/flowchart.html#links-between-nodes
         'Tooltip': ['Kickoff notes', 'Define requirements', 'Check results', 'Final sign-off'],
         'URL': ['#', 'https://example.com/data', 'https://example.com/analysis', 'https://example.com/report'],
         'notes': ['', 'Note B', 'Note C', 'Note D']
@@ -28,6 +29,7 @@ def df_to_mermaid(df, theme):
     mermaid_code += "flowchart TD\n"
 
     # 2. Build Nodes and Edges
+    # not added: node styles
     for index, row in df.iterrows():
         # Sanitize IDs/Labels
         from_id = row['From_ID'].strip()
@@ -36,7 +38,11 @@ def df_to_mermaid(df, theme):
         to_label = row['To_Label'].replace('"', '\\"')
         
         # Line: A["Start"] --> B["End"]
-        mermaid_code += f"    {from_id}[\"{from_label}\"] --> {to_id}[\"{to_label}\"]\n"
+        # pull connector from DataFrame
+        connector = row['Connector'].strip() #if 'Connector' in row and pd.notna(row['Connector']) else '-->'
+        print(connector)
+        # concatenate using the connector
+        mermaid_code += f"    {from_id}[\"{from_label}\"] {connector} {to_id}[\"{to_label}\"]\n"
 
     # 3. Add Click Events (Tooltips/Links)
     # Get unique nodes that have metadata
@@ -54,8 +60,9 @@ def df_to_mermaid(df, theme):
             # Escape quotes for JS string
             tip = tip.replace('"', '\\"') 
             mermaid_code += f"    click {id} \"{url}\" \"{tip}\"\n"
-
+    print(mermaid_code)
     return mermaid_code
+
 def build_url_map(df: pd.DataFrame) -> Dict[str, str]:
     """Build a mapping of node ID -> URL from a DataFrame.
 
@@ -158,6 +165,18 @@ with st.sidebar:
         ['default', 'dark', 'neutral', 'forest'],
         index=0
     )
+    # Orientation selector: change diagram flow direction
+    orientation = st.selectbox(
+        "Diagram Direction:",
+        [
+            ('TD', 'Top → Bottom (TD)'),
+            ('LR', 'Left → Right (LR)'),
+        ],
+        index=0,
+        format_func=lambda x: x[1],
+    )
+    # orientation is a tuple (code, label); extract the code
+    orientation_code = orientation[0]
     
     st.header("Data Input")
     
@@ -190,20 +209,20 @@ else:
 # Generate the Mermaid Code from the DataFrame
 mermaid_code_output = df_to_mermaid(input_df, theme_option)
 
+# Apply selected orientation (replace the default header once)
+try:
+    if orientation_code and isinstance(orientation_code, str):
+        mermaid_code_output = mermaid_code_output.replace("flowchart TD\n", f"flowchart {orientation_code}\n", 1)
+except NameError:
+    # orientation_code not defined (e.g., called from other script) — ignore
+    pass
+
 # Build a mapping from node ID -> URL so click handlers can look up links.
 url_map = build_url_map(input_df)
 note_map = build_note_map(input_df)
 # --- Display Mermaid Diagram ---
 
-st.header("Generated Flowchart")
-
-# Render the diagram using the custom Streamlit component
-#st_mermaid(
-#    mermaid_code_output,
-#    key="original_mermaid_chart", # Use a unique key!
-#    height=800                  # Set a larger height (e.g., 600px)
-#)
-
+st.header("Flowchart with Interactive Nodes")
 
 result = mermaid(mermaid_code_output, theme="neutral", key="flowchart")
 print(result)
@@ -246,6 +265,10 @@ if 'mermaid_editor_code' not in st.session_state:
 st.session_state['mermaid_editor_code'] = mermaid_code_output
 
 st.header("Mermaid Code Editor (Edit to fine-tune)")
+
+st.markdown(" \
+You can edit the Mermaid code to fine-tune the diagram.  \
+See the [Mermaid Flowchart Documentation](https://mermaid.js.org/syntax/flowchart.html) " )
 
 # 3. Use st.text_area for an editable box
 edited_code = st.text_area(
