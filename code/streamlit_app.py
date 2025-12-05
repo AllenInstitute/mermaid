@@ -1,11 +1,9 @@
 import streamlit as st
 import pandas as pd
-import streamlit_mermaid
-#import streamlit_mermaid_interactive
-from streamlit_mermaid import st_mermaid
+from streamlit_mermaid_interactive import mermaid
+from typing import Dict
 
-#from streamlit_mermaid_interactive import st_mermaid
-
+# see: https://pypi.org/project/streamlit-mermaid-interactive/0.1.12/
 ## 1. DATA AND LOGIC (Your df_to_mermaid equivalent in Python)
 # -----------------------------------------------------------
 
@@ -17,7 +15,8 @@ def create_sample_data():
         'To_ID': ['B', 'C', 'D', 'E'],
         'To_Label': ['Data Collection', 'Analysis', 'Review', 'Final Report'],
         'Tooltip': ['Kickoff notes', 'Define requirements', 'Check results', 'Final sign-off'],
-        'URL': ['#', 'https://example.com/data', 'https://example.com/analysis', 'https://example.com/report']
+        'URL': ['#', 'https://example.com/data', 'https://example.com/analysis', 'https://example.com/report'],
+        'notes': ['', 'Note B', 'Note C', 'Note D']
     }
     return pd.DataFrame(data)
 
@@ -57,7 +56,92 @@ def df_to_mermaid(df, theme):
             mermaid_code += f"    click {id} \"{url}\" \"{tip}\"\n"
 
     return mermaid_code
+def build_url_map(df: pd.DataFrame) -> Dict[str, str]:
+    """Build a mapping of node ID -> URL from a DataFrame.
 
+    The DataFrame is expected to contain the columns `From_ID`, `To_ID`,
+    and `URL`. The function prefers non-empty URLs and will populate
+    entries for both `From_ID` and `To_ID`.
+
+    Returns a dict where keys are IDs (strings) and values are URLs (strings).
+    """
+    url_map: Dict[str, str] = {}
+    for _, r in df.iterrows():
+        try:
+            fid = str(r.get('From_ID', '')).strip()
+        except Exception:
+            fid = ''
+        try:
+            tid = str(r.get('To_ID', '')).strip()
+        except Exception:
+            tid = ''
+        try:
+            flabel = str(r.get('From_Label', '')).strip()
+        except Exception:
+            flabel = ''
+        try:
+            tlabel = str(r.get('To_Label', '')).strip()
+        except Exception:
+            tlabel = ''
+        url = r.get('URL', '') if pd.notna(r.get('URL', '')) else ''
+        if fid:
+            if fid not in url_map or (not url_map[fid] and url):
+                url_map[fid] = url
+        if tid:
+            if tid not in url_map or (not url_map[tid] and url):
+                url_map[tid] = url
+        # Also map human-facing labels to the same URL so click events that
+        # return labels (instead of IDs) can be resolved.
+        if flabel:
+            if flabel not in url_map or (not url_map[flabel] and url):
+                url_map[flabel] = url
+        if tlabel:
+            if tlabel not in url_map or (not url_map[tlabel] and url):
+                url_map[tlabel] = url
+    return url_map
+
+def build_note_map(df: pd.DataFrame) -> Dict[str, str]:
+    """Build a mapping of node ID -> notes from a DataFrame.
+
+    The DataFrame is expected to contain the columns `From_ID`, `To_ID`,
+    and `notes`. 
+
+    Returns a dict where keys are IDs (strings) and values are notes (strings).
+    """
+    note_map: Dict[str, str] = {}
+    for _, r in df.iterrows():
+        try:
+            fid = str(r.get('From_ID', '')).strip()
+        except Exception:
+            fid = ''
+        try:
+            tid = str(r.get('To_ID', '')).strip()
+        except Exception:
+            tid = ''
+        try:
+            flabel = str(r.get('From_Label', '')).strip()
+        except Exception:
+            flabel = ''
+        try:
+            tlabel = str(r.get('To_Label', '')).strip()
+        except Exception:
+            tlabel = ''
+        note = r.get('notes', '') if pd.notna(r.get('notes', '')) else ''
+        if fid:
+            if fid not in note_map or (not note_map[fid] and note):
+                note_map[fid] = note
+        if tid:
+            if tid not in note_map or (not note_map[tid] and note):
+                note_map[tid] = note
+        # Also map human-facing labels to the same URL so click events that
+        # return labels (instead of IDs) can be resolved.
+        if flabel:
+            if flabel not in note_map or (not note_map[flabel] and note):
+                note_map[flabel] = note
+        if tlabel:
+            if tlabel not in note_map or (not note_map[tlabel] and note):
+                note_map[tlabel] = note
+    return note_map
 
 ## 2. STREAMLIT APP INTERFACE
 # -----------------------------
@@ -106,20 +190,51 @@ else:
 # Generate the Mermaid Code from the DataFrame
 mermaid_code_output = df_to_mermaid(input_df, theme_option)
 
+# Build a mapping from node ID -> URL so click handlers can look up links.
+url_map = build_url_map(input_df)
+note_map = build_note_map(input_df)
 # --- Display Mermaid Diagram ---
 
 st.header("Generated Flowchart")
 
 # Render the diagram using the custom Streamlit component
-st_mermaid(
-    mermaid_code_output,
-    key="original_mermaid_chart", # Use a unique key!
-    height=800                  # Set a larger height (e.g., 600px)
-)
+#st_mermaid(
+#    mermaid_code_output,
+#    key="original_mermaid_chart", # Use a unique key!
+#    height=800                  # Set a larger height (e.g., 600px)
+#)
 
-# Display the generated code
-#with st.expander("View Generated Mermaid Code"):
-#    st.code(mermaid_code_output, language='mermaid')
+
+result = mermaid(mermaid_code_output, theme="neutral", key="flowchart")
+print(result)
+
+if result.get("entity_clicked"):
+    entity = result.get("entity_clicked")
+    # try the URL reported by the component first, then fallback to our DataFrame map
+#    url = url_map.get(entity, '')
+    url = result.get("entity_url") or url_map.get(entity, '')
+    note = result.get("note") or note_map.get(entity, '')
+    st.info(f"Clicked: {entity}")
+    #st.write(f"Clicked: {entity}")
+    print("URL:",url)
+    print("note:",note)
+    if url and url != '#':
+        # render a clickable link that opens in a new tab
+        st.markdown(
+            f'<a href="{url}" target="_blank" rel="noopener noreferrer">Open link</a>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.write("No URL available for this node")
+    # dsplay the notes, if available
+    if note and note != '#':
+        st.markdown(
+            f'**Notes:** {note}',
+        )
+    else:
+        st.write("No notes available for this node")
+    
+    
 
 # 1. Initialize session state if the code hasn't been generated yet
 if 'mermaid_editor_code' not in st.session_state:
@@ -143,12 +258,16 @@ edited_code = st.text_area(
 # 4. Render the diagram using the content of the editable box
 st.header("Generated Flowchart")
 
-st_mermaid(
-    edited_code, # Render the diagram from the *editable* text area
-    key="updated_mermaid_chart",
-    height=800                  # Set a larger height (e.g., 600px)
-)
+result_update = mermaid(edited_code, theme="neutral", key="flowchart_update")
 
-
-
-  
+if result_update.get("entity_clicked"):
+    entity = result_update.get("entity_clicked")
+    url = result_update.get("entity_url") or url_map.get(entity, '')
+    st.info(f"Clicked: {entity}")
+    if url and url != '#':
+        st.markdown(
+            f'<a href="{url}" target="_blank" rel="noopener noreferrer">Open link</a>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.write("No URL available for this node")
