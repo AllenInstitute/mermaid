@@ -11,6 +11,10 @@
 		"pip": {
 			"packages": [
 				{
+					"name": "mermaid-py",
+					"version": "0.8.0"
+				},
+				{
 					"name": "pandas",
 					"version": "2.3.3"
 				},
@@ -21,6 +25,10 @@
 				{
 					"name": "streamlit-mermaid",
 					"version": "0.3.0"
+				},
+				{
+					"name": "streamlit-mermaid-interactive",
+					"version": "0.1.12"
 				}
 			],
 			"options": {},
