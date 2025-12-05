@@ -4,7 +4,7 @@ from streamlit_mermaid_interactive import mermaid
 from typing import Dict
 
 # see: https://pypi.org/project/streamlit-mermaid-interactive/0.1.12/
-## 1. DATA AND LOGIC (Your df_to_mermaid equivalent in Python)
+## 1. DATA AND LOGIC (Converting DataFrame to Mermaid Syntax)
 # -----------------------------------------------------------
 
 def create_sample_data():
@@ -14,7 +14,7 @@ def create_sample_data():
         'From_Label': ['Project Start', 'Project Start', 'Analysis', 'Review'],
         'To_ID': ['B', 'C', 'D', 'E'],
         'To_Label': ['Data Collection', 'Analysis', 'Review', 'Final Report'],
-        'Connector': ['---', '-- some text -->', '-.->', '<-->'], # see https://mermaid.js.org/syntax/flowchart.html#links-between-nodes
+        'Connector': ['', '-- some text -->', '-.->', '<-->'], # see https://mermaid.js.org/syntax/flowchart.html#links-between-nodes
         'Tooltip': ['Kickoff notes', 'Define requirements', 'Check results', 'Final sign-off'],
         'URL': ['#', 'https://example.com/data', 'https://example.com/analysis', 'https://example.com/report'],
         'notes': ['', 'Note B', 'Note C', 'Note D']
@@ -38,9 +38,14 @@ def df_to_mermaid(df, theme):
         to_label = row['To_Label'].replace('"', '\\"')
         
         # Line: A["Start"] --> B["End"]
-        # pull connector from DataFrame
-        connector = row['Connector'].strip() #if 'Connector' in row and pd.notna(row['Connector']) else '-->'
-        print(connector)
+        # pull connector from DataFrame; treat NaN or blank strings as missing
+        raw_connector = row.get('Connector', '')
+        if pd.notna(raw_connector):
+            conn_candidate = str(raw_connector).strip()
+            connector = conn_candidate if conn_candidate else '-->'
+        else:
+            connector = '-->'
+        # debug: print(connector)
         # concatenate using the connector
         mermaid_code += f"    {from_id}[\"{from_label}\"] {connector} {to_id}[\"{to_label}\"]\n"
 
