@@ -8,6 +8,14 @@
 		"mount_secrets": true
 	},
 	"installers": {
+		"conda": {
+			"packages": [
+				{
+					"name": "jupyterlab",
+					"version": "4.5.0"
+				}
+			]
+		},
 		"pip": {
 			"packages": [
 				{
