@@ -1,5 +1,15 @@
 # MERMAID charts on streamlit
 
+`mermaid` is a lightweight tool for creating visualizations such as flowcharts and simple charts.
+
+```mermaid
+graph TD;
+    A-->B;
+    A-->C;
+    B<-->D;
+    C-->D;
+```
+
 ## Objective
 
 `mermaid` chart viewer and editor.
