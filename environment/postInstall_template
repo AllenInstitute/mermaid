@@ -27,3 +27,20 @@ code-server --disable-telemetry --extensions-dir $CODE_EXTENSIONS_DIR --install-
 # move/link VS Code directory into capsule, so it persists between cloud workstation runs
 # NB: this must be done AFTER the extension installations, otherwise the installed extensions can't be seen by the cloud workstation
 ln -s /root/capsule/code/.vscode/ /.vscode
+
+# patch mermaid
+# Set the path variable for clarity
+PYTHON_PACKAGE_PATH="/opt/conda/lib/python3.12/site-packages/streamlit_mermaid_interactive/__init__.py"
+PYTHON_CACHE_PATH="/opt/conda/lib/python3.12/site-packages/streamlit_mermaid_interactive/__pycache__"
+
+echo "--- Patching streamlit_mermaid_interactive ---"
+
+# 1. Apply the patch: Remove 'js="main.js",' argument from the component declaration
+# Using '|' as the sed delimiter for safety and -i for in-place edit
+sed -i 's|js="main.js",||g' "$PYTHON_PACKAGE_PATH"
+
+# 2. Clear Python's bytecode cache to force reloading the patched .py file
+echo "Clearing Python bytecode cache..."
+rm -rf "$PYTHON_CACHE_PATH"
+
+echo "--- Patching complete ---"
