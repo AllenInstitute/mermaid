@@ -1,5 +1,20 @@
-#MERMAID charts on streamlit
+# MERMAID charts on streamlit
 
 ## Objective
 
 `mermaid` chart viewer and editor.
+
+- Accepts input of a dataframe with the workflow, URLs, connector types
+  - The dataframe template can be downloaded from the app.
+  - The columns are `[From_ID, From_Label, To_ID, To_Label, Connector, Tooltip, URL, notes]`
+
+## Options
+
+1. Clone the repository and run it in Code Ocean or locally as a streamlit app.
+2. Or generate mermaid plots by running a jupyter notebook/ jupyter lab IDE and using the `.ipynb` file as a template.
+3. The mermaid-formatted text block and be copied from the app and pasted into a tool such as [mermaid.live](mermaid.live) for some additional functions.
+
+## To-do
+
+- Tooltips are not implemented
+- node shape changes are not supported, except in manual edit mode
