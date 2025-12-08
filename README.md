@@ -22,7 +22,8 @@ graph TD;
 
 1. Clone the repository and run it in Code Ocean or locally as a streamlit app.
 2. Or generate mermaid plots by running a jupyter notebook/ jupyter lab IDE and using the `.ipynb` file as a template.
-3. The mermaid-formatted text block and be copied from the app and pasted into a tool such as [mermaid.live](mermaid.live) for some additional functions.
+3. The mermaid-formatted text block and be copied from the app and pasted into a commercial tool such as [mermaid.live](mermaid.live) for some additional functions.
+4. I took the streamlit app and fed it into claude Sonnet 4.5 to develop a pure `html` solution, which is demoed in [mermaid_interactive.html](./code/mermaid_interactive.html). 
 
 ## To-do
 
