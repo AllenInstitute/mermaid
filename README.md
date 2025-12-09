@@ -27,5 +27,7 @@ graph TD;
 
 ## To-do
 
-- Tooltips are not implemented
+- Tooltips are not implemented in streamlit. They are in html
 - node shape changes are not supported, except in manual edit mode
+- SVG download is not working in html
+- Add links to syntax to html
