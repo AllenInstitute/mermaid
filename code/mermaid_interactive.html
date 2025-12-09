@@ -270,10 +270,10 @@ This may make the implementation more lightweight and easier to deploy in some c
         let noteMap = {};
 
         const sampleData = [
-            ['A', 'Project Start', 'B', 'Data Collection', '', 'Kickoff notes', '#', ''],
-            ['A', 'Project Start', 'C', 'Analysis', '-- some text -->', 'Define requirements', 'https://example.com/data', 'Note B'],
-            ['C', 'Analysis', 'D', 'Review', '-.->',  'Check results', 'https://example.com/analysis', 'Note C'],
-            ['D', 'Review', 'E', 'Final Report', '<-->', 'Final sign-off', 'https://example.com/report', 'Note D']
+            ['A', 'Project Start', 'B', 'Data Collection', '', 'Kickoff notes', '#', '', '#D4EDDA'], // Added color
+            ['A', 'Project Start', 'C', 'Analysis', '-- some text -->', 'Define requirements', 'https://example.com/data', 'Note B', '#FFF3CD'], // Added color
+            ['C', 'Analysis', 'D', 'Review', '-.->',  'Check results', 'https://example.com/analysis', 'Note C', ''], // Added empty color
+            ['D', 'Review', 'E', 'Final Report', '<-->', 'Final sign-off', 'https://example.com/report', 'Note D', '#F8D7DA'] // Added color
         ];
 
         function loadSampleData() {
@@ -283,12 +283,12 @@ This may make the implementation more lightweight and easier to deploy in some c
         }
 
         function downloadTemplate() {
-            const csv = 'From_ID,From_Label,To_ID,To_Label,Connector,Tooltip,URL,notes\n' +
-                       'A,Project Start,B,Data Collection,,Kickoff notes,#,\n' +
-                       'A,Project Start,C,Analysis,-- some text -->,Define requirements,https://example.com/data,Note B\n' +
-                       'C,Analysis,D,Review,-.->,Check results,https://example.com/analysis,Note C\n' +
-                       'D,Review,E,Final Report,<-->,Final sign-off,https://example.com/report,Note D';
-            
+        const csv = 'From_ID,From_Label,To_ID,To_Label,Connector,Tooltip,URL,notes,Node_Color\n' +
+            'A,Project Start,B,Data Collection,,Kickoff notes,#,,\n' + // Added blank column
+            'A,Project Start,C,Analysis,-- some text -->,Define requirements,https://example.com/data,Note B,\n' + // Added blank column
+            'C,Analysis,D,Review,-.->,Check results,https://example.com/analysis,Note C,\n' + // Added blank column
+            'D,Review,E,Final Report,<-->,Final sign-off,https://example.com/report,Note D,'; // Added blank column
+                    
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -322,7 +322,7 @@ This may make the implementation more lightweight and easier to deploy in some c
 
         function displayTable(data) {
             const table = document.getElementById('csvTable');
-            const headers = ['From_ID', 'From_Label', 'To_ID', 'To_Label', 'Connector', 'Tooltip', 'URL', 'notes'];
+            const headers = ['From_ID', 'From_Label', 'To_ID', 'To_Label', 'Connector', 'Tooltip', 'URL', 'notes', 'Node_Color']; // <--- UPDATED
             
             let html = '<thead><tr>';
             headers.forEach(h => html += `<th>${h}</th>`);
@@ -340,40 +340,52 @@ This may make the implementation more lightweight and easier to deploy in some c
         function generateMermaidCode() {
             const theme = document.getElementById('theme').value;
             const direction = document.getElementById('direction').value;
-            
             let code = `%%{init: {'theme': '${theme}'}}%%\n`;
             code += `flowchart ${direction}\n`;
-            
             urlMap = {};
             noteMap = {};
             
+            // Use a map to store the unique node IDs and their color/style
+            const nodeStyles = new Map();
+
             currentData.forEach(row => {
-                const [fromId, fromLabel, toId, toLabel, connector, tooltip, url, notes] = row;
-                const conn = connector && connector.trim() ? connector.trim() : '-->';
+                // Updated row destructuring: row[8] is the new Node_Color column
+                const [fromId, fromLabel, toId, toLabel, connector, tooltip, url, notes, color] = row;
                 
+                const conn = connector && connector.trim() ? connector.trim() : '-->';
                 code += `    ${fromId}["${fromLabel}"] ${conn} ${toId}["${toLabel}"]\n`;
+
+                // 1. COLLECT STYLES
+                // Style the 'From' node if a color is provided in the current row
+                if (color && color.trim()) {
+                    // Store the style definition: 'fill:COLOR,stroke:#333' (adding a fixed stroke for visibility)
+                    nodeStyles.set(fromId, `fill:${color.trim()},stroke:#333`);
+                }
                 
                 // Map both ID and label to URL/notes for lookup
                 if (url && url !== '#') {
-                    urlMap[fromId] = url;
-                    urlMap[fromLabel] = url;
-                    urlMap[toId] = url;
-                    urlMap[toLabel] = url;
+                    urlMap[fromId] = url; urlMap[fromLabel] = url; 
+                    urlMap[toId] = url; urlMap[toLabel] = url;
                 }
                 if (notes && notes.trim()) {
-                    noteMap[fromId] = notes;
-                    noteMap[fromLabel] = notes;
-                    noteMap[toId] = notes;
-                    noteMap[toLabel] = notes;
+                    noteMap[fromId] = notes; noteMap[fromLabel] = notes; 
+                    noteMap[toId] = notes; noteMap[toLabel] = notes;
                 }
             });
-            
+
             console.log('URL Map:', urlMap);
             console.log('Note Map:', noteMap);
-            
+
+            // 2. APPEND STYLE DEFINITIONS
+            let styleString = '\n    %% Custom Node Styles\n';
+            nodeStyles.forEach((style, nodeId) => {
+                // Generate the Mermaid style line for each colored node
+                styleString += `    style ${nodeId} ${style};\n`;
+            });
+            code += styleString;
+
             code += '\n    %% Interactive Elements\n';
             const uniqueNodes = [...new Set(currentData.map(r => r[0]))];
-            
             uniqueNodes.forEach(nodeId => {
                 const row = currentData.find(r => r[0] === nodeId);
                 if (row) {
@@ -385,11 +397,10 @@ This may make the implementation more lightweight and easier to deploy in some c
                     }
                 }
             });
-            
+
             document.getElementById('mermaidCode').value = code;
             renderDiagram();
         }
-
         async function renderDiagram() {
             const code = document.getElementById('mermaidCode').value;
             const diagram = document.getElementById('diagram');
