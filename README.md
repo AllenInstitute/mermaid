@@ -17,6 +17,7 @@ graph TD;
 - Accepts input of a dataframe with the workflow, URLs, connector types
   - The dataframe template can be downloaded from the app.
   - The columns are `[From_ID, From_Label, To_ID, To_Label, Connector, Tooltip, URL, notes]`
+  - **Semantics:** Each row represents a unique connection/edge. The `Tooltip`, `URL`, and `notes` are associated with the **target node** (`To_ID`). If the same node appears as a target multiple times, the first non-empty URL/tooltip is used.
 
 ## Options
 

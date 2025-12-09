@@ -50,21 +50,28 @@ def df_to_mermaid(df, theme):
         mermaid_code += f"    {from_id}[\"{from_label}\"] {connector} {to_id}[\"{to_label}\"]\n"
 
     # 3. Add Click Events (Tooltips/Links)
-    # Get unique nodes that have metadata
-    unique_nodes = df.drop_duplicates(subset=['From_ID'])
+    # Each row represents a connection (edge). We associate tooltip/URL with
+    # the target node (To_ID). If the same To_ID appears multiple times,
+    # we use the first non-empty URL/tooltip we encounter.
     
     mermaid_code += "\n    %% Interactive Elements (Tooltips & Links)\n"
-
-    for index, row in unique_nodes.iterrows():
-        id = row['From_ID'].strip()
+    
+    # Track which To_IDs we've already added click handlers for
+    # (to avoid duplicate click statements in Mermaid)
+    seen_to_ids = set()
+    
+    for index, row in df.iterrows():
+        to_id = row['To_ID'].strip()
         url = row['URL'] if pd.notna(row['URL']) else '#'
         tip = row['Tooltip'] if pd.notna(row['Tooltip']) else ''
         
-        # Syntax: click ID "URL" "Tooltip"
-        if url != '#' or tip != '':
+        # Only add a click handler for this To_ID if we haven't seen it yet.
+        # (In Mermaid, multiple click statements for the same ID would be redundant.)
+        if to_id not in seen_to_ids and (url != '#' or tip != ''):
+            seen_to_ids.add(to_id)
             # Escape quotes for JS string
             tip = tip.replace('"', '\\"') 
-            mermaid_code += f"    click {id} \"{url}\" \"{tip}\"\n"
+            mermaid_code += f"    click {to_id} \"{url}\" \"{tip}\"\n"
     print(mermaid_code)
     return mermaid_code
 

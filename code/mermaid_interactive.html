@@ -521,6 +521,10 @@
                     <h2>📋 CSV Data</h2>
                     <span class="status-badge" id="dataStatus">Ready</span>
                 </div>
+                <div>   
+                    <small style="color: #6c757d;">Note that the URL, 
+                        notes and tooltip are associated with the <strong>target node ("TO_ID")</strong> in each connection.</small>
+                </div>
                 <div id="csvTableContainer">
                     <table id="csvTable"></table>
                 </div>
@@ -531,6 +535,10 @@
                     <h2>📝 Mermaid Code</h2>
                     <span class="status-badge" id="codeStatus">Ready</span>
                 </div>
+                <div><small style="color: #6c757d;">Use the buttons below to update the diagram or copy the code to your clipboard.
+                    The mermaid syntax can be explored at: 
+                    <a href = "https://mermaid.js.org/syntax/flowchart.html" target="_blank">https://mermaid.js.org/syntax/flowchart.html</a>
+                </small></div>
                 <textarea id="mermaidCode" placeholder="Your Mermaid code will appear here..."></textarea>
                 <div class="code-actions">
                     <button class="btn-primary" onclick="renderDiagram()">Update Diagram</button>
@@ -852,17 +860,16 @@
                     nodeStyles.set(fromId, `fill:${color.trim()},stroke:#333,stroke-width:2px`);
                 }
                 
+                // Associate URL and tooltip with the TARGET node (To_ID)
                 if (url && url !== '#') {
-                    urlMap[fromId] = url; urlMap[fromLabel] = url; 
-                    urlMap[toId] = url; urlMap[toLabel] = url;
+                    urlMap[toId] = url; 
+                    urlMap[toLabel] = url;
                 }
                 if (notes && notes.trim()) {
-                    noteMap[fromId] = notes; noteMap[fromLabel] = notes; 
-                    noteMap[toId] = notes; noteMap[toLabel] = notes;
+                    noteMap[toId] = notes; 
+                    noteMap[toLabel] = notes;
                 }
                 if (tooltip && tooltip.trim()) {
-                    tooltipMap[fromId] = tooltip; 
-                    tooltipMap[fromLabel] = tooltip;
                     tooltipMap[toId] = tooltip; 
                     tooltipMap[toLabel] = tooltip;
                 }
@@ -876,17 +883,17 @@
             });
             code += styleString;
 
-            code += '\n    %% Interactive Elements\n';
-            const uniqueNodes = [...new Set(currentData.map(r => r[0]))];
-            uniqueNodes.forEach(nodeId => {
-                const row = currentData.find(r => r[0] === nodeId);
-                if (row) {
-                    const [fromId, , , , , tooltip, url] = row;
-                    if (url && url !== '#' || tooltip) {
-                        const tip = tooltip ? tooltip.replace(/"/g, '\\"') : '';
-                        const link = url || '#';
-                        code += `    click ${fromId} "${link}" "${tip}"\n`;
-                    }
+            code += '\n    %% Interactive Elements (associated with target nodes)\n';
+            // Track which To_IDs we've already added click handlers for
+            const seenToIds = new Set();
+            currentData.forEach(row => {
+                const [, , toId, , , tooltip, url] = row;
+                // Only add a click handler for this To_ID if we haven't seen it yet
+                if (!seenToIds.has(toId) && (url && url !== '#' || tooltip)) {
+                    seenToIds.add(toId);
+                    const tip = tooltip ? tooltip.replace(/"/g, '\\"') : '';
+                    const link = url || '#';
+                    code += `    click ${toId} "${link}" "${tip}"\n`;
                 }
             });
 
