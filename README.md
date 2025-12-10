@@ -25,10 +25,14 @@ graph TD;
 2. Or generate mermaid plots by running a jupyter notebook/ jupyter lab IDE and using the `.ipynb` file as a template.
 3. The mermaid-formatted text block and be copied from the app and pasted into a commercial tool such as [mermaid.live](mermaid.live) for some additional functions.
 4. I took the streamlit app and fed it into claude Sonnet 4.5 to develop a pure `html` solution, which is demoed in [mermaid_interactive.html](./code/mermaid_interactive.html). 
+5. The `.html` solution includes two components. 
+    
+    **a**. The [mermaid_interactive.html](./code/mermaid_interactive.html) page will allow you to create a `mermaid` diagram from a `.csv` file, download templates for the `.csv`, make edits to the diagram, and export `mermaid` syntax for pasting into another editor. 
+    
+    **b**. The page also allows you to make a project landing page with the **Generate Landing Page** button. This creates a simple project home page that features the `mermaid` diagram you created and has space to put in links and documentation. 
 
 ## To-do
 
 - Tooltips are not implemented in streamlit. They are in html
-- node shape changes are not supported, except in manual edit mode
+- Node shape changes are not supported, except in manual edit mode
 - SVG download is not working in html
-- Add links to syntax to html

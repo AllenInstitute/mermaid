@@ -570,9 +570,11 @@
         const maxHistory = 50;
 
         const sampleData = [
+            // Precedence: To_Color takes precedence over From_Color when both exist for the same node.
+            //  Implementation detail: We collect fromColors and toColors while scanning rows, then build nodeStyles such that toColors overwrite fromColors.
             // [From_ID, From_Label, To_ID, To_Label, Connector, Tooltip, URL, notes, From_Color, To_Color]
-            ['A', 'Project Start', 'B', 'Data Collection', '', 'Kickoff notes', '#', '', '#B8B8B8A', '#B8B8B8A'],
-            ['A', 'Project Start', 'C', 'Analysis', '-- some text -->', 'Define requirements', 'https://example.com/data', 'Note B', '', '#B8B8B8'],
+            ['A', 'Project Start', 'B', 'Data Collection', '', 'Kickoff notes', '#', '', '#B8B8B8A', '#F8BBD0'],
+            ['A', 'Project Start', 'C', 'Analysis', '-- some text -->', 'Define requirements', 'https://example.com/data', 'Note B', '#E3F2FD', '#B8B8B8'],
             ['C', 'Analysis', 'D', 'Review', '-.->',  'Check results', 'https://example.com/analysis', 'Note C', '', '#D1CFCF'],
             ['D', 'Review', 'E', 'Final Report', '<-->', 'Final sign-off', 'https://example.com/report', 'Note D', '', '#D1CFCF']
         ];
