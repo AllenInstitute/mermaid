@@ -524,7 +524,8 @@
                 </div>
                 <div>   
                     <small style="color: #6c757d;">Note that the URL, 
-                        notes and tooltip are associated with the <strong>target node ("TO_ID")</strong> in each connection.</small>
+                        notes and tooltip are associated with the <strong>target node ("TO_ID")</strong> in each connection. 
+                        <strong>To_Color</strong> takes precedence over <strong>From_Color</strong> when both exist for the same node.</small>
                 </div>
                 <div id="csvTableContainer">
                     <table id="csvTable"></table>
@@ -569,53 +570,54 @@
         const maxHistory = 50;
 
         const sampleData = [
-            ['A', 'Project Start', 'B', 'Data Collection', '', 'Kickoff notes', '#', '', '#D4EDDA'],
-            ['A', 'Project Start', 'C', 'Analysis', '-- some text -->', 'Define requirements', 'https://example.com/data', 'Note B', '#FFF3CD'],
-            ['C', 'Analysis', 'D', 'Review', '-.->',  'Check results', 'https://example.com/analysis', 'Note C', ''],
-            ['D', 'Review', 'E', 'Final Report', '<-->', 'Final sign-off', 'https://example.com/report', 'Note D', '#F8D7DA']
+            // [From_ID, From_Label, To_ID, To_Label, Connector, Tooltip, URL, notes, From_Color, To_Color]
+            ['A', 'Project Start', 'B', 'Data Collection', '', 'Kickoff notes', '#', '', '#B8B8B8A', '#B8B8B8A'],
+            ['A', 'Project Start', 'C', 'Analysis', '-- some text -->', 'Define requirements', 'https://example.com/data', 'Note B', '', '#B8B8B8'],
+            ['C', 'Analysis', 'D', 'Review', '-.->',  'Check results', 'https://example.com/analysis', 'Note C', '', '#D1CFCF'],
+            ['D', 'Review', 'E', 'Final Report', '<-->', 'Final sign-off', 'https://example.com/report', 'Note D', '', '#D1CFCF']
         ];
 
         // Template data
         const templates = {
             project: [
-                ['A', 'Requirements', 'B', 'Design', '-->', '', '', '', '#E3F2FD'],
-                ['B', 'Design', 'C', 'Development', '-->', '', '', '', '#FFF9C4'],
-                ['C', 'Development', 'D', 'Testing', '-->', '', '', '', '#FFE0B2'],
-                ['D', 'Testing', 'E', 'Deployment', '-->', '', '', '', '#C8E6C9'],
-                ['E', 'Deployment', 'F', 'Maintenance', '-->', '', '', '', '#F8BBD0']
+                ['A', 'Requirements', 'B', 'Design', '---', 'tooltip example', 'url goes here', 'notes can be added', '', '#E3F2FD'],
+                ['B', 'Design', 'C', 'Development', '-->', '', '', '', '', '#FFF9C4'],
+                ['C', 'Development', 'D', 'Testing', '-->', '', '', '', '', '#FFE0B2'],
+                ['D', 'Testing', 'E', 'Deployment', '-->', '', '', '', '', '#C8E6C9'],
+                ['E', 'Deployment', 'F', 'Maintenance', '-->', '', '', '', '', '#F8BBD0']
             ],
             decision: [
-                ['A', 'Start', 'B', 'Check Input', '-->', '', '', '', '#E1F5FE'],
-                ['B', 'Check Input', 'C', 'Valid?', '-->', '', '', '', '#FFF9C4'],
-                ['C', 'Valid?', 'D', 'Process', '-->|Yes|', '', '', '', '#C8E6C9'],
-                ['C', 'Valid?', 'E', 'Error', '-->|No|', '', '', '', '#FFCDD2'],
-                ['D', 'Process', 'F', 'Success', '-->', '', '', '', '#C8E6C9'],
-                ['E', 'Error', 'B', 'Check Input', '-.->|Retry|', '', '', '', '']
+                ['A', 'Start', 'B', 'Check Input', '-->', '', '', '', '', '#E1F5FE'],
+                ['B', 'Check Input', 'C', 'Valid?', '-->', '', '', '', '', '#FFF9C4'],
+                ['C', 'Valid?', 'D', 'Process', '-->|Yes|', '', '', '', '', '#C8E6C9'],
+                ['C', 'Valid?', 'E', 'Error', '-->|No|', '', '', '', '', '#FFCDD2'],
+                ['D', 'Process', 'F', 'Success', '-->', '', '', '', '', '#C8E6C9'],
+                ['E', 'Error', 'B', 'Check Input', '-.->|Retry|', '', '', '', '', '']
             ],
             process: [
-                ['A', 'Customer Request', 'B', 'Sales Review', '-->', '', '', '', '#E8EAF6'],
-                ['B', 'Sales Review', 'C', 'Quote', '-->', '', '', '', '#FFF9C4'],
-                ['C', 'Quote', 'D', 'Approval', '-->', '', '', '', '#FFE0B2'],
-                ['D', 'Approval', 'E', 'Production', '-->', '', '', '', '#B2DFDB'],
-                ['E', 'Production', 'F', 'Quality Check', '-->', '', '', '', '#F0F4C3'],
-                ['F', 'Quality Check', 'G', 'Delivery', '-->', '', '', '', '#C8E6C9']
+                ['A', 'Customer Request', 'B', 'Sales Review', '-->', '', '', '', '', '#E8EAF6'],
+                ['B', 'Sales Review', 'C', 'Quote', '-->', '', '', '', '', '#FFF9C4'],
+                ['C', 'Quote', 'D', 'Approval', '-->', '', '', '', '', '#FFE0B2'],
+                ['D', 'Approval', 'E', 'Production', '-->', '', '', '', '', '#B2DFDB'],
+                ['E', 'Production', 'F', 'Quality Check', '-->', '', '', '', '', '#F0F4C3'],
+                ['F', 'Quality Check', 'G', 'Delivery', '-->', '', '', '', '', '#C8E6C9']
             ],
             onboarding: [
-                ['A', 'Offer Accepted', 'B', 'Paperwork', '-->', '', '', '', '#E3F2FD'],
-                ['B', 'Paperwork', 'C', 'IT Setup', '-->', '', '', '', '#F3E5F5'],
-                ['B', 'Paperwork', 'D', 'Workspace Prep', '-->', '', '', '', '#F3E5F5'],
-                ['C', 'IT Setup', 'E', 'First Day', '-->', '', '', '', '#FFF9C4'],
-                ['D', 'Workspace Prep', 'E', 'First Day', '-->', '', '', '', '#FFF9C4'],
-                ['E', 'First Day', 'F', 'Training', '-->', '', '', '', '#C8E6C9'],
-                ['F', 'Training', 'G', 'Active Employee', '-->', '', '', '', '#A5D6A7']
+                ['A', 'Offer Accepted', 'B', 'Paperwork', '-->', '', '', '', '', '#E3F2FD'],
+                ['B', 'Paperwork', 'C', 'IT Setup', '-->', '', '', '', '', '#F3E5F5'],
+                ['B', 'Paperwork', 'D', 'Workspace Prep', '-->', '', '', '', '', '#F3E5F5'],
+                ['C', 'IT Setup', 'E', 'First Day', '-->', '', '', '', '', '#FFF9C4'],
+                ['D', 'Workspace Prep', 'E', 'First Day', '-->', '', '', '', '', '#FFF9C4'],
+                ['E', 'First Day', 'F', 'Training', '-->', '', '', '', '', '#C8E6C9'],
+                ['F', 'Training', 'G', 'Active Employee', '-->', '', '', '', '', '#A5D6A7']
             ],
             sales: [
-                ['A', 'Lead', 'B', 'Qualified', '-->', '', '', '', '#E1F5FE'],
-                ['B', 'Qualified', 'C', 'Demo', '-->', '', '', '', '#B3E5FC'],
-                ['C', 'Demo', 'D', 'Proposal', '-->', '', '', '', '#81D4FA'],
-                ['D', 'Proposal', 'E', 'Negotiation', '-->', '', '', '', '#4FC3F7'],
-                ['E', 'Negotiation', 'F', 'Closed Won', '-->|Success|', '', '', '', '#C8E6C9'],
-                ['E', 'Negotiation', 'G', 'Closed Lost', '-->|Failed|', '', '', '', '#FFCDD2']
+                ['A', 'Lead', 'B', 'Qualified', '-->', '', '', '', '', '#E1F5FE'],
+                ['B', 'Qualified', 'C', 'Demo', '-->', '', '', '', '', '#B3E5FC'],
+                ['C', 'Demo', 'D', 'Proposal', '-->', '', '', '', '', '#81D4FA'],
+                ['D', 'Proposal', 'E', 'Negotiation', '-->', '', '', '', '', '#4FC3F7'],
+                ['E', 'Negotiation', 'F', 'Closed Won', '-->|Success|', '', '', '', '', '#C8E6C9'],
+                ['E', 'Negotiation', 'G', 'Closed Lost', '-->|Failed|', '', '', '', '', '#FFCDD2']
             ]
         };
 
@@ -1006,12 +1008,13 @@
         }
 
         function downloadTemplate() {
-            const csv = 'From_ID,From_Label,To_ID,To_Label,Connector,Tooltip,URL,notes,Node_Color\n' +
-                'A,Project Start,B,Data Collection,,Kickoff notes,#,,#D4EDDA\n' +
-                'A,Project Start,C,Analysis,-- some text -->,Define requirements,https://example.com/data,Note B,#FFF3CD\n' +
-                'C,Analysis,D,Review,-.->,Check results,https://example.com/analysis,Note C,\n' +
-                'D,Review,E,Final Report,<-->,Final sign-off,https://example.com/report,Note D,#F8D7DA';
-            
+            // New template includes From_Color and To_Color columns
+            const csv = 'From_ID,From_Label,To_ID,To_Label,Connector,Tooltip,URL,notes,From_Color,To_Color\n' +
+                'A,Project Start,B,Data Collection,,Kickoff notes,#,,,#D4EDDA\n' +
+                'A,Project Start,C,Analysis,-- some text -->,Define requirements,https://example.com/data,Note B,,#FFF3CD\n' +
+                'C,Analysis,D,Review,-.->,Check results,https://example.com/analysis,Note C,,\n' +
+                'D,Review,E,Final Report,<-->,Final sign-off,https://example.com/report,Note D,,#F8D7DA';
+
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1046,7 +1049,7 @@
 
         function displayTable(data) {
             const table = document.getElementById('csvTable');
-            const headers = ['From_ID', 'From_Label', 'To_ID', 'To_Label', 'Connector', 'Tooltip', 'URL', 'notes', 'Node_Color'];
+            const headers = ['From_ID', 'From_Label', 'To_ID', 'To_Label', 'Connector', 'Tooltip', 'URL', 'notes', 'From_Color', 'To_Color'];
             
             let html = '<thead><tr>';
             headers.forEach(h => html += `<th>${h}</th>`);
@@ -1055,7 +1058,8 @@
             data.forEach(row => {
                 html += '<tr>';
                 row.forEach((cell, idx) => {
-                    if (idx === 8 && cell && cell.trim()) {
+                    const headerName = headers[idx] || '';
+                    if ((headerName === 'From_Color' || headerName === 'To_Color') && cell && cell.trim()) {
                         html += `<td><span style="display:inline-block;width:20px;height:20px;background:${cell};border:1px solid #ccc;border-radius:3px;margin-right:5px;"></span>${cell}</td>`;
                     } else {
                         html += `<td>${cell || ''}</td>`;
@@ -1076,18 +1080,34 @@
             noteMap = {};
             tooltipMap = {};
             
-            const nodeStyles = new Map();
+            // Collect colors separately for From and To nodes, then merge with clear precedence (To overrides From)
+            const fromColors = new Map();
+            const toColors = new Map();
 
             currentData.forEach(row => {
-                const [fromId, fromLabel, toId, toLabel, connector, tooltip, url, notes, color] = row;
-                
+                // Support CSVs with older single Node_Color (at index 8) or new From_Color/To_Color (indexes 8/9)
+                const [fromId, fromLabel, toId, toLabel, connector, tooltip, url, notes, fromColor, toColor] = row;
+
                 const conn = connector && connector.trim() ? connector.trim() : '-->';
                 code += `    ${fromId}["${fromLabel}"] ${conn} ${toId}["${toLabel}"]\n`;
 
-                if (color && color.trim()) {
-                    nodeStyles.set(fromId, `fill:${color.trim()},stroke:#333,stroke-width:2px`);
+                // Record colors separately
+                if (fromColor && String(fromColor).trim()) {
+                    fromColors.set(fromId, String(fromColor).trim());
                 }
-                
+                if (toColor && String(toColor).trim()) {
+                    toColors.set(toId, String(toColor).trim());
+                }
+
+                // Backwards compat: if older CSV used a single Node_Color in the 9th column, try to detect it
+                // (some older rows may have that value in position 8). If so, apply as To_Color by default.
+                if (!toColors.has(toId) && row.length >= 9 && (!toColor || String(toColor).trim() === '')) {
+                    const legacyColor = row[8];
+                    if (legacyColor && String(legacyColor).trim() && legacyColor.trim().startsWith('#')) {
+                        toColors.set(toId, legacyColor.trim());
+                    }
+                }
+
                 // Associate URL and tooltip with the TARGET node (To_ID)
                 if (url && url !== '#') {
                     urlMap[toId] = url; 
@@ -1104,6 +1124,16 @@
             });
 
             console.log('Tooltip Map:', tooltipMap);
+
+            // Merge colors into final nodeStyles map. To_Color takes precedence over From_Color.
+            const nodeStyles = new Map();
+            fromColors.forEach((color, nodeId) => {
+                nodeStyles.set(nodeId, `fill:${color},stroke:#333,stroke-width:2px`);
+            });
+            toColors.forEach((color, nodeId) => {
+                // Override any fromColor for this node
+                nodeStyles.set(nodeId, `fill:${color},stroke:#333,stroke-width:2px`);
+            });
 
             let styleString = '\n    %% Custom Node Styles\n';
             nodeStyles.forEach((style, nodeId) => {
