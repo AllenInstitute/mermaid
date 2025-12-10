@@ -775,7 +775,10 @@
                 function generateLandingPage() {
                     const rawCode = document.getElementById('mermaidCode').value || 'flowchart TD\n    A[Start] --> B[End]';
                     const theme = document.getElementById('theme').value || 'default';
-                    const title = document.querySelector('.header h1')?.textContent || 'Project Diagram';
+                    //uncomment below to pull the title from the main page
+                    //const title = document.querySelector('.header h1')?.textContent || 'Project Diagram';
+                    //or specify it here    
+                    const title = 'Project Landing Page';
 
                     // Remove click directives from the mermaid code (we'll handle clicks ourselves)
                     const codeLines = rawCode.split('\n');
