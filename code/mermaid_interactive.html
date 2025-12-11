@@ -419,6 +419,32 @@
                 border-bottom: 2px solid #e9ecef;
             }
         }
+        .grid {
+                display: grid;
+                /* Define two columns: one for the main card, one for the sidebar */
+                grid-template-columns: 3fr 1fr; /* Example ratio: 75% for main, 25% for side */
+                gap: 1.5rem; /* Space between columns */
+                /* Ensure the grid container can fill the screen height if needed */
+                height: 100%;
+            }
+
+            .card {
+                display: flex; /* Make the card a flex container */
+                flex-direction: column; /* Stack items vertically */
+                height: 100%; /* Ensure the card takes full height of its grid cell */
+            }
+
+            /* New style for the iframe container to manage its size */
+            .box.full.iframe-container {
+                flex-grow: 1; /* This makes the iframe container take up all available vertical space */
+                min-height: 400px; /* Ensure a minimum height if the main card is too short */
+                display: flex; /* Make it a flex container to manage the iframe inside */
+            }
+
+            .box.full.iframe-container iframe {
+                flex-grow: 1; /* The iframe will expand to fill the container */
+                height: 100%; /* Ensures the iframe uses the full height assigned by flex-grow */
+            }
     </style>
 </head>
 <body>
@@ -972,13 +998,14 @@
                     landingParts.push('                <div id="infoPanel" class="info-panel"></div>');
                     landingParts.push('                 <div class="box medium"><strong>Notes</strong><div style="margin-top:6px;color:#4b5563">Short notes or summary here.</div></div>'); //insert notes
                                                             //insert iFrame
-                    landingParts.push('                 <div id="extraBox" class="box full">');
+                    landingParts.push('                 <div id="extraBox" class="box full iframe-container">'); // <-- ADD 'iframe-container' class here
                     landingParts.push('                 <strong>Loop page</strong>');
                     landingParts.push('                 <div style="margin-top:8px">');
-                    landingParts.push('                 <div class="box full"><iframe src="https://alleninstitute.sharepoint.com/:fl:/g/contentstorage/CSP_d929d9b0-2d76-4965-934f-bd826f1833eb/IQARsoQAnxLmToMoWNvm_okKAeLvKzTQqKo783SfkvQQczc?e=ThUpW3&nav=cz0lMkZjb250ZW50c3RvcmFnZSUyRkNTUF9kOTI5ZDliMC0yZDc2LTQ5NjUtOTM0Zi1iZDgyNmYxODMzZWImZD1iJTIxc05rcDJYWXRaVW1UVDcyQ2J4Z3o2OGtQa2pzWmhIeEhrUHQwV3g4ak0tc21DcjljY0tybVNwSlZNdkVJcjhRXyZmPTAxSUNRR1RRSVJXS0NBQkhZUzRaSElHS0NZM1BUUDVDSUsmYz0lMkYmYT1Mb29wQXBwJnA9JTQwZmx1aWR4JTJGbG9vcC1wYWdlLWNvbnRhaW5lciZ4PSU3QiUyMnclMjIlM0ElMjJUMFJUVUh4aGJHeGxibWx1YzNScGRIVjBaUzV6YUdGeVpYQnZhVzUwTG1OdmJYeGlJWE5PYTNBeVdGbDBXbFZ0VkZRM01rTmllR2Q2TmpoclVHdHFjMXBvU0hoSWExQjBNRmQ0T0dwTkxYTnRRM0k1WTJOTGNtMVRjRXBXVFhaRlNYSTRVVjk4TURGSlExRkhWRkZQUjA1QlJWWk1WMWRCVWxaR1MwcExWa1pTVERSVE0xVk9RUSUzRCUzRCUyMiUyQyUyMmklMjIlM0ElMjI2MmRjMzZjMC0wZmE4LTQyZDgtYThjNS0xZTEzMTdlYmJiYjQlMjIlN0Q%3D" style="width:100%;height:100%;border:0;border-radius:6px"></iframe>');
+                    // Ensure the inner box is still 'full' if needed, but the parent container does the heavy lifting
+                    landingParts.push('                 <div class="box full"><iframe src="...URL..." style="width:100%;height:100%;border:0;border-radius:6px"></iframe>');
                     landingParts.push('                 </div>');
                     landingParts.push('                 </div>');
-                    landingParts.push('            </div>');
+                    landingParts.push('                 </div>'); // End of #extraBox
                     landingParts.push('            <div class="side">');
                     landingParts.push('                <div class="card">');
                     landingParts.push('                    <div class="box"><strong>Overview</strong><div style="margin-top:6px;color:#4b5563">Summary or description for this project can go here.</div></div>');
