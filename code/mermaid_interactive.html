@@ -818,6 +818,10 @@
                     landingParts.push('        .diagram-container{position:relative;cursor:grab;background:#fff;min-height:400px}');
                     landingParts.push('        .diagram-container.panning{cursor:grabbing}');
                     landingParts.push('        #mermaidDiagramContainer{transform-origin:center center;transition:transform 0.1s ease-out}');
+                    landingParts.push('         .card .box{margin-top:12px;padding:12px;border-radius:8px;background:#fafafa;border:1px dashed #e6e9ef;overflow:hidden}');
+                    landingParts.push('         .card .box.large{height:660px;min-height:300px;overflow:auto}');
+                    landingParts.push('         .card .box.medium{height:220px;min-height:140px;overflow:auto}');
+                    landingParts.push('         .card .box.full{height:520px;min-height:300px;overflow:auto}');
                     landingParts.push('    </style>');
                     landingParts.push('    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\/script>');
                     landingParts.push('    <script>');
@@ -966,6 +970,14 @@
                     landingParts.push('            <div class="card">');
                     landingParts.push('                <div id="diagram" class="diagram-container"></div>');
                     landingParts.push('                <div id="infoPanel" class="info-panel"></div>');
+                    landingParts.push('                 <div class="box medium"><strong>Notes</strong><div style="margin-top:6px;color:#4b5563">Short notes or summary here.</div></div>'); //insert notes
+                                                            //insert iFrame
+                    landingParts.push('                 <div id="extraBox" class="box full">');
+                    landingParts.push('                 <strong>Loop page</strong>');
+                    landingParts.push('                 <div style="margin-top:8px">');
+                    landingParts.push('                 <div class="box full"><iframe src="https://alleninstitute.sharepoint.com/:fl:/g/contentstorage/CSP_d929d9b0-2d76-4965-934f-bd826f1833eb/IQARsoQAnxLmToMoWNvm_okKAeLvKzTQqKo783SfkvQQczc?e=ThUpW3&nav=cz0lMkZjb250ZW50c3RvcmFnZSUyRkNTUF9kOTI5ZDliMC0yZDc2LTQ5NjUtOTM0Zi1iZDgyNmYxODMzZWImZD1iJTIxc05rcDJYWXRaVW1UVDcyQ2J4Z3o2OGtQa2pzWmhIeEhrUHQwV3g4ak0tc21DcjljY0tybVNwSlZNdkVJcjhRXyZmPTAxSUNRR1RRSVJXS0NBQkhZUzRaSElHS0NZM1BUUDVDSUsmYz0lMkYmYT1Mb29wQXBwJnA9JTQwZmx1aWR4JTJGbG9vcC1wYWdlLWNvbnRhaW5lciZ4PSU3QiUyMnclMjIlM0ElMjJUMFJUVUh4aGJHeGxibWx1YzNScGRIVjBaUzV6YUdGeVpYQnZhVzUwTG1OdmJYeGlJWE5PYTNBeVdGbDBXbFZ0VkZRM01rTmllR2Q2TmpoclVHdHFjMXBvU0hoSWExQjBNRmQ0T0dwTkxYTnRRM0k1WTJOTGNtMVRjRXBXVFhaRlNYSTRVVjk4TURGSlExRkhWRkZQUjA1QlJWWk1WMWRCVWxaR1MwcExWa1pTVERSVE0xVk9RUSUzRCUzRCUyMiUyQyUyMmklMjIlM0ElMjI2MmRjMzZjMC0wZmE4LTQyZDgtYThjNS0xZTEzMTdlYmJiYjQlMjIlN0Q%3D" style="width:100%;height:100%;border:0;border-radius:6px"></iframe>');
+                    landingParts.push('                 </div>');
+                    landingParts.push('                 </div>');
                     landingParts.push('            </div>');
                     landingParts.push('            <div class="side">');
                     landingParts.push('                <div class="card">');
