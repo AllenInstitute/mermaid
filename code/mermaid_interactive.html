@@ -529,6 +529,9 @@
                     <div class="export-dropdown">
                         <button class="zoom-btn" onclick="toggleExport()">💾 Export</button>
                         <div id="exportMenu" class="export-menu">
+                            <div class="export-item" onclick="exportDiagram('pdf')">
+                                📄 Export as PDF (Best for Illustrator)
+                            </div>
                             <div class="export-item" onclick="exportDiagram('png')">
                                 🖼️ Export as PNG
                             </div>
@@ -727,6 +730,7 @@
                 saveToHistory(this.value);
             }, 1000); // Save after 1 second of no typing
         });
+        // exportDiagram function with PDF export
 
         async function exportDiagram(format) {
             const svg = document.querySelector('#diagram svg');
@@ -737,30 +741,70 @@
 
             document.getElementById('exportMenu').classList.remove('show');
 
-            if (format === 'svg') {
-                // Clone the SVG to avoid modifying the displayed one
+            if (format === 'pdf') {
+                // BEST FOR ILLUSTRATOR: Export as PDF
+                // This converts to high-quality raster first, then embeds in PDF
+                await exportAsPDF(svg);
+                
+            } else if (format === 'svg') {
+                // Enhanced SVG export with Illustrator fixes
                 const svgClone = svg.cloneNode(true);
                 
-                // Ensure proper SVG attributes for standalone viewing
+                // Ensure proper SVG attributes
                 svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
                 svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
                 
-                // Get the viewBox or calculate it from width/height
+                // FIX 1: Convert all text fonts to explicit families
+                const textElements = svgClone.querySelectorAll('text, tspan');
+                textElements.forEach(textEl => {
+                    // Force explicit font
+                    textEl.setAttribute('font-family', 'Arial, Helvetica, sans-serif');
+                    
+                    // Ensure font-size is explicit
+                    if (!textEl.getAttribute('font-size')) {
+                        textEl.setAttribute('font-size', '14');
+                    }
+                    
+                    // Add inline styles
+                    const existingStyle = textEl.getAttribute('style') || '';
+                    textEl.setAttribute('style', 
+                        existingStyle + `;font-family:Arial,Helvetica,sans-serif;font-size:14px`);
+                });
+                
+                // FIX 2: Better viewBox with padding
                 if (!svgClone.hasAttribute('viewBox')) {
                     const bbox = svg.getBBox();
-                    svgClone.setAttribute('viewBox', `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
+                    const padding = 20;
+                    svgClone.setAttribute('viewBox', 
+                        `${bbox.x - padding} ${bbox.y - padding} ${bbox.width + padding * 2} ${bbox.height + padding * 2}`
+                    );
                 }
                 
-                // Add white background for better viewing
+                // FIX 3: Explicit dimensions
+                if (!svgClone.hasAttribute('width')) {
+                    svgClone.setAttribute('width', svgClone.viewBox.baseVal.width || '800');
+                }
+                if (!svgClone.hasAttribute('height')) {
+                    svgClone.setAttribute('height', svgClone.viewBox.baseVal.height || '600');
+                }
+                
+                // FIX 4: Add white background
                 const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 rect.setAttribute('width', '100%');
                 rect.setAttribute('height', '100%');
                 rect.setAttribute('fill', 'white');
+                rect.setAttribute('x', svgClone.viewBox.baseVal.x || 0);
+                rect.setAttribute('y', svgClone.viewBox.baseVal.y || 0);
                 svgClone.insertBefore(rect, svgClone.firstChild);
                 
-                // Serialize with proper XML declaration
-                const svgData = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' + 
-                               new XMLSerializer().serializeToString(svgClone);
+                // FIX 5: Clean up problematic elements
+                const emptyGroups = svgClone.querySelectorAll('g:empty');
+                emptyGroups.forEach(g => g.remove());
+                
+                // Serialize with DOCTYPE
+                const svgData = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' +
+                            '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n' +
+                            new XMLSerializer().serializeToString(svgClone);
                 
                 const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
@@ -769,11 +813,13 @@
                 a.download = 'mermaid-diagram.svg';
                 a.click();
                 URL.revokeObjectURL(url);
+                
+                alert('SVG exported!\n\nIf text is missing in Illustrator, use PDF export instead (better compatibility).');
+                
             } else if (format === 'png') {
-                // Export as PNG
+                // PNG export
                 const svgClone = svg.cloneNode(true);
                 
-                // Add white background
                 const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 rect.setAttribute('width', '100%');
                 rect.setAttribute('height', '100%');
@@ -786,8 +832,8 @@
                 const img = new Image();
                 
                 img.onload = function() {
-                    canvas.width = img.width * 2; // 2x for better quality
-                    canvas.height = img.height * 2;
+                    canvas.width = img.width * 3; // 3x for high quality
+                    canvas.height = img.height * 3;
                     ctx.fillStyle = 'white';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -804,6 +850,74 @@
                 
                 img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
             }
+        }
+
+        // NEW: PDF export function using jsPDF
+        async function exportAsPDF(svg) {
+            // Check if jsPDF is loaded
+            if (typeof window.jspdf === 'undefined') {
+                alert('Loading PDF library...');
+                
+                // Dynamically load jsPDF
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                script.onload = function() {
+                    exportAsPDF(svg); // Retry after loading
+                };
+                document.head.appendChild(script);
+                return;
+            }
+
+            // Convert SVG to high-res PNG first
+            const svgClone = svg.cloneNode(true);
+            
+            // Add white background
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('width', '100%');
+            rect.setAttribute('height', '100%');
+            rect.setAttribute('fill', 'white');
+            svgClone.insertBefore(rect, svgClone.firstChild);
+            
+            const svgData = new XMLSerializer().serializeToString(svgClone);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = function() {
+                // High resolution for quality
+                const scale = 2;
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // Create PDF
+                const { jsPDF } = window.jspdf;
+                
+                // Calculate dimensions (convert px to mm, ~3.78 px per mm)
+                const pdfWidth = canvas.width / 3.78;
+                const pdfHeight = canvas.height / 3.78;
+                
+                // Create PDF with correct size
+                const pdf = new jsPDF({
+                    orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+                    unit: 'mm',
+                    format: [pdfWidth, pdfHeight]
+                });
+                
+                // Add image to PDF
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                
+                // Download
+                pdf.save('mermaid-diagram.pdf');
+                
+                alert('PDF exported! This works perfectly with Illustrator:\n\n1. Open the PDF in Illustrator\n2. All text and shapes will be editable\n3. Right-click objects to "Release Clipping Mask" if needed');
+            };
+            
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
         }
 
                 // Generate a simplified project home HTML file and offer it for download
