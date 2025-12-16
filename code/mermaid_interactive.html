@@ -530,7 +530,7 @@
                         <button class="zoom-btn" onclick="toggleExport()">💾 Export</button>
                         <div id="exportMenu" class="export-menu">
                             <div class="export-item" onclick="exportDiagram('pdf')">
-                                📄 Export as PDF (Best for Illustrator)
+                                📄 Export as PDF
                             </div>
                             <div class="export-item" onclick="exportDiagram('png')">
                                 🖼️ Export as PNG
@@ -742,7 +742,7 @@
             document.getElementById('exportMenu').classList.remove('show');
 
             if (format === 'pdf') {
-                // BEST FOR ILLUSTRATOR: Export as PDF
+                // Export as PDF
                 // This converts to high-quality raster first, then embeds in PDF
                 await exportAsPDF(svg);
                 
@@ -754,22 +754,66 @@
                 svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
                 svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
                 
-                // FIX 1: Convert all text fonts to explicit families
+                // Function to force black fill on text elements for editor compatibility
+                // FIX 1: Convert all text fonts and styles to explicit inline attributes
                 const textElements = svgClone.querySelectorAll('text, tspan');
                 textElements.forEach(textEl => {
-                    // Force explicit font
+                    // A. Force explicit font family and size
+                    const fontSize = textEl.getAttribute('font-size') || '14';
                     textEl.setAttribute('font-family', 'Arial, Helvetica, sans-serif');
+                    textEl.setAttribute('font-size', fontSize);
+
+                    // B. CRITICAL FIX: Ensure text has an inline fill color (default to black)
+                    // Inkscape/Illustrator often miss the fill color from CSS/classes.
+                    let existingStyle = textEl.getAttribute('style') || '';
+                    let newStyle = existingStyle.trim();
                     
-                    // Ensure font-size is explicit
-                    if (!textEl.getAttribute('font-size')) {
-                        textEl.setAttribute('font-size', '14');
+                    // 1. Force the font styles inline (including 'px' unit for Illustrator)
+                    newStyle += `;font-family:Arial,Helvetica,sans-serif;font-size:${fontSize}px`;
+                    
+                    // 2. If 'fill' is not already defined inline, force it to black (Inkscape text fix)
+                    if (!/fill\s*:\s*[^;]/.test(newStyle)) { // Check if fill is NOT defined in the inline style
+                        // Try to get the computed style for a better color match if in a browser environment
+                        const computedStyle = window.getComputedStyle(textEl);
+                        const computedFill = computedStyle.getPropertyValue('fill');
+
+                        if (computedFill && computedFill !== 'none' && computedFill !== 'rgba(0, 0, 0, 0)') {
+                            newStyle += `;fill:${computedFill}`;
+                        } else {
+                            newStyle += ';fill:black;'; // Default to black if computed style is unavailable or transparent
+                        }
                     }
                     
-                    // Add inline styles
-                    const existingStyle = textEl.getAttribute('style') || '';
-                    textEl.setAttribute('style', 
-                        existingStyle + `;font-family:Arial,Helvetica,sans-serif;font-size:14px`);
+                    textEl.setAttribute('style', newStyle);
                 });
+
+
+                // FIX 2: Ensure Node/Path styles are inlined for color 
+                // This is an additional step to ensure node colors and borders are retained.
+                // Illustrator showing blue boxes means it's ignoring the custom 'fill' style set by Mermaid's CSS.
+                const elementsToInline = svgClone.querySelectorAll('.node rect, .node polygon, .edgePath path, .edgeLabel');
+                elementsToInline.forEach(el => {
+                    const computedStyle = window.getComputedStyle(el);
+                    let inlineStyle = el.getAttribute('style') || '';
+                    
+                    // Inline fill, stroke, and stroke-width
+                    const fill = computedStyle.getPropertyValue('fill');
+                    const stroke = computedStyle.getPropertyValue('stroke');
+                    const strokeWidth = computedStyle.getPropertyValue('stroke-width');
+
+                    if (fill && fill !== 'none') {
+                        inlineStyle += `;fill:${fill}`;
+                    }
+                    if (stroke && stroke !== 'none') {
+                        inlineStyle += `;stroke:${stroke}`;
+                    }
+                    if (strokeWidth && strokeWidth !== '0px') {
+                        inlineStyle += `;stroke-width:${strokeWidth}`;
+                    }
+
+                    el.setAttribute('style', inlineStyle);
+                });
+
                 
                 // FIX 2: Better viewBox with padding
                 if (!svgClone.hasAttribute('viewBox')) {
@@ -814,7 +858,7 @@
                 a.click();
                 URL.revokeObjectURL(url);
                 
-                alert('SVG exported!\n\nIf text is missing in Illustrator, use PDF export instead (better compatibility).');
+                alert('SVG exported!\n\nIf text is missing, use PDF export instead (better compatibility).\n\nThis SVG does not work in Illustrator due to its limitations with SVG text handling.\n\nInkscape can load these SVGs.');
                 
             } else if (format === 'png') {
                 // PNG export
@@ -914,7 +958,7 @@
                 // Download
                 pdf.save('mermaid-diagram.pdf');
                 
-                alert('PDF exported! This works perfectly with Illustrator:\n\n1. Open the PDF in Illustrator\n2. All text and shapes will be editable\n3. Right-click objects to "Release Clipping Mask" if needed');
+                alert('PDF exported!');
             };
             
             img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
