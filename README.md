@@ -1,6 +1,23 @@
-# MERMAID charts on streamlit
+# MERMAID charts from CSV templates
+
+**Zack Lewis, PhD**
+_Allen Institute for Brain Science_
+
+## Overview
 
 `mermaid` is a lightweight tool for creating visualizations such as flowcharts and simple charts. See [here for the mermaid syntax](https://docs.mermaidchart.com/mermaid-oss/intro/syntax-reference.html).
+
+`mermaid` charts are generated with a simple syntax, like follows:
+
+```raw
+graph TD;
+    A-->B;
+    A-->C;
+    B<-->D;
+    C-->D;
+```
+
+which yields:
 
 ```mermaid
 graph TD;
@@ -12,7 +29,10 @@ graph TD;
 
 ## Objective
 
-`mermaid` chart viewer and editor.
+A. `mermaid` chart viewer and editor with input from a `.csv` file.
+B. Generation of project landing pages incorporating the `mermaid` chart and project-specific links and documentation.
+C. Support for links and notes in the `mermaid` chart. 
+
 
 - Accepts input of a dataframe with the workflow, URLs, connector types
   - The dataframe template can be downloaded from the app.
@@ -35,4 +55,4 @@ graph TD;
 
 - Tooltips are not implemented in streamlit. They are in html
 - Node shape changes are not supported, except in manual edit mode
-- SVG download is not working in html
+- `SVG` download is not working well in html. The `.svg` files render okay (not perfectly) in inkscape, but poorly in Adobe Illustrator. 
