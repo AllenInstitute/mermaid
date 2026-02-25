@@ -1263,14 +1263,19 @@
             }
         });
 
-        function parseCSVLine(line) {
-            const fields = [];
+        function parseCSV(csv) {
+            // Single-pass parser: handles quoted fields that contain commas OR literal newlines.
+            // Also supports \n as an escape sequence in unquoted fields.
+            const text = csv.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            const rows = [];
+            let fields = [];
             let current = '';
             let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                const ch = line[i];
+
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
                 if (ch === '"') {
-                    if (inQuotes && line[i + 1] === '"') {
+                    if (inQuotes && text[i + 1] === '"') {
                         // Escaped double-quote inside a quoted field ("" → ")
                         current += '"';
                         i++;
@@ -1280,17 +1285,21 @@
                 } else if (ch === ',' && !inQuotes) {
                     fields.push(current);
                     current = '';
+                } else if (ch === '\n' && !inQuotes) {
+                    // Row boundary — flush the current row
+                    fields.push(current);
+                    current = '';
+                    if (fields.some(f => f.trim())) rows.push(fields);
+                    fields = [];
                 } else {
                     current += ch;
                 }
             }
+            // Flush the last row
             fields.push(current);
-            return fields;
-        }
+            if (fields.some(f => f.trim())) rows.push(fields);
 
-        function parseCSV(csv) {
-            const lines = csv.split('\n').filter(line => line.trim());
-            currentData = lines.slice(1).map(line => parseCSVLine(line));
+            currentData = rows.slice(1); // drop header row
             displayTable(currentData);
             generateMermaidCode();
         }
@@ -1558,7 +1567,12 @@
             }
 
             if (note && note.trim()) {
-                html += `<p><strong>📝 Notes:</strong> ${escapeHtml(note)}</p>`;
+                // Support both literal newlines (multi-line quoted CSV field)
+                // and \n escape sequences typed in a single-line cell
+                const formattedNote = escapeHtml(note)
+                    .replace(/\n/g, '<br>')
+                    .replace(/\\n/g, '<br>');
+                html += `<p><strong>📝 Notes:</strong> ${formattedNote}</p>`;
             }
             
             infoPanel.innerHTML = html;
