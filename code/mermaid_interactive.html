@@ -557,8 +557,8 @@
                     <span class="status-badge" id="dataStatus">Ready</span>
                 </div>
                 <div>   
-                    <small style="color: #6c757d;">Note that the URL, 
-                        notes and tooltip are associated with the <strong>target node ("TO_ID")</strong> in each connection. 
+                    <small style="color: #6c757d;">URL, notes, and tooltip are associated with the <strong>target node ("TO_ID")</strong> by default.
+                        Set <strong>Link_Node</strong> to <code>from</code> to associate them with the source node instead.
                         <strong>To_Color</strong> takes precedence over <strong>From_Color</strong> when both exist for the same node.</small>
                 </div>
                 <div id="csvTableContainer">
@@ -1236,11 +1236,11 @@
 
         function downloadTemplate() {
             // New template includes From_Color and To_Color columns
-            const csv = 'From_ID,From_Label,To_ID,To_Label,Connector,Tooltip,URL,notes,From_Color,To_Color\n' +
-                'A,Project Start,B,Data Collection,,Kickoff notes,#,,,#D4EDDA\n' +
-                'A,Project Start,C,Analysis,-- some text -->,Define requirements,https://example.com/data,Note B,,#FFF3CD\n' +
+            const csv = 'From_ID,From_Label,To_ID,To_Label,Connector,Tooltip,URL,notes,From_Color,To_Color,Link_Node\n' +
+                'A,Project Start,B,Data Collection,,Kickoff notes,https://example.com/start,Source notes,#B8B8B8,,from\n' +
+                'A,Project Start,C,Analysis,-- some text -->,Define requirements,https://example.com/data,Note B,,#FFF3CD,\n' +
                 'C,Analysis,D,Review,-.->,Check results,https://example.com/analysis,Note C,,\n' +
-                'D,Review,E,Final Report,<-->,Final sign-off,https://example.com/report,Note D,,#F8D7DA';
+                'D,Review,E,Final Report,<-->,Final sign-off,https://example.com/report,Note D,,#F8D7DA,';
 
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
@@ -1306,7 +1306,7 @@
 
         function displayTable(data) {
             const table = document.getElementById('csvTable');
-            const headers = ['From_ID', 'From_Label', 'To_ID', 'To_Label', 'Connector', 'Tooltip', 'URL', 'notes', 'From_Color', 'To_Color'];
+            const headers = ['From_ID', 'From_Label', 'To_ID', 'To_Label', 'Connector', 'Tooltip', 'URL', 'notes', 'From_Color', 'To_Color', 'Link_Node'];
             
             let html = '<thead><tr>';
             headers.forEach(h => html += `<th>${h}</th>`);
@@ -1343,7 +1343,7 @@
 
             currentData.forEach(row => {
                 // Support CSVs with older single Node_Color (at index 8) or new From_Color/To_Color (indexes 8/9)
-                const [fromId, fromLabel, toId, toLabel, connector, tooltip, url, notes, fromColor, toColor] = row;
+                const [fromId, fromLabel, toId, toLabel, connector, tooltip, url, notes, fromColor, toColor, linkNode] = row;
 
                 const conn = connector && connector.trim() ? connector.trim() : '-->';
                 code += `    ${fromId}["${fromLabel}"] ${conn} ${toId}["${toLabel}"]\n`;
@@ -1365,18 +1365,22 @@
                     }
                 }
 
-                // Associate URL and tooltip with the TARGET node (To_ID)
+                // Link_Node='from' associates URL/notes/tooltip with the source node instead of the destination.
+                const usFrom = linkNode && linkNode.trim().toLowerCase() === 'from';
+                const metaId    = usFrom ? fromId    : toId;
+                const metaLabel = usFrom ? fromLabel : toLabel;
+
                 if (url && url !== '#') {
-                    urlMap[toId] = url; 
-                    urlMap[toLabel] = url;
+                    urlMap[metaId] = url;
+                    urlMap[metaLabel] = url;
                 }
                 if (notes && notes.trim()) {
-                    noteMap[toId] = notes; 
-                    noteMap[toLabel] = notes;
+                    noteMap[metaId] = notes;
+                    noteMap[metaLabel] = notes;
                 }
                 if (tooltip && tooltip.trim()) {
-                    tooltipMap[toId] = tooltip; 
-                    tooltipMap[toLabel] = tooltip;
+                    tooltipMap[metaId] = tooltip;
+                    tooltipMap[metaLabel] = tooltip;
                 }
             });
 
@@ -1403,14 +1407,16 @@
             // NOTE: URLs are intentionally NOT embedded in click directives — embedding a URL
             // causes Mermaid to create an <a> tag that navigates directly, conflicting with
             // our JS info-panel handler. URLs are handled exclusively by JS event listeners.
-            const seenToIds = new Set();
+            const seenClickIds = new Set();
             currentData.forEach(row => {
-                const [, , toId, , , tooltip] = row;
+                const [fromId, , toId, , , tooltip, , , , , linkNode] = row;
+                const usFrom = linkNode && linkNode.trim().toLowerCase() === 'from';
+                const clickId = usFrom ? fromId : toId;
                 // Only add a click directive when there is tooltip text to show natively
-                if (!seenToIds.has(toId) && tooltip && tooltip.trim()) {
-                    seenToIds.add(toId);
+                if (!seenClickIds.has(clickId) && tooltip && tooltip.trim()) {
+                    seenClickIds.add(clickId);
                     const tip = tooltip.trim().replace(/"/g, '\\"');
-                    code += `    click ${toId} handleNodeClick "${tip}"\n`;
+                    code += `    click ${clickId} handleNodeClick "${tip}"\n`;
                 }
             });
 
