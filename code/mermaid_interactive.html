@@ -1263,13 +1263,34 @@
             }
         });
 
+        function parseCSVLine(line) {
+            const fields = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        // Escaped double-quote inside a quoted field ("" → ")
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (ch === ',' && !inQuotes) {
+                    fields.push(current);
+                    current = '';
+                } else {
+                    current += ch;
+                }
+            }
+            fields.push(current);
+            return fields;
+        }
+
         function parseCSV(csv) {
             const lines = csv.split('\n').filter(line => line.trim());
-            const headers = lines[0].split(',');
-            currentData = lines.slice(1).map(line => {
-                const values = line.split(',');
-                return values;
-            });
+            currentData = lines.slice(1).map(line => parseCSVLine(line));
             displayTable(currentData);
             generateMermaidCode();
         }
@@ -1370,15 +1391,17 @@
 
             code += '\n    %% Interactive Elements (associated with target nodes)\n';
             // Track which To_IDs we've already added click handlers for
+            // NOTE: URLs are intentionally NOT embedded in click directives — embedding a URL
+            // causes Mermaid to create an <a> tag that navigates directly, conflicting with
+            // our JS info-panel handler. URLs are handled exclusively by JS event listeners.
             const seenToIds = new Set();
             currentData.forEach(row => {
-                const [, , toId, , , tooltip, url] = row;
-                // Only add a click handler for this To_ID if we haven't seen it yet
-                if (!seenToIds.has(toId) && (url && url !== '#' || tooltip)) {
+                const [, , toId, , , tooltip] = row;
+                // Only add a click directive when there is tooltip text to show natively
+                if (!seenToIds.has(toId) && tooltip && tooltip.trim()) {
                     seenToIds.add(toId);
-                    const tip = tooltip ? tooltip.replace(/"/g, '\\"') : '';
-                    const link = url || '#';
-                    code += `    click ${toId} "${link}" "${tip}"\n`;
+                    const tip = tooltip.trim().replace(/"/g, '\\"');
+                    code += `    click ${toId} handleNodeClick "${tip}"\n`;
                 }
             });
 
@@ -1526,16 +1549,16 @@
             const url = urlMap[nodeId];
             const note = noteMap[nodeId];
             
-            let html = `<h3>📍 Node: ${nodeId}</h3>`;
-            
+            let html = `<h3>📍 Node: ${escapeHtml(nodeId)}</h3>`;
+
             if (url && url !== '#') {
-                html += `<p>🔗 <a href="${url}" target="_blank">Open link: ${url}</a></p>`;
+                html += `<p>🔗 <a href="${escapeHtml(url)}" target="_blank">Open link: ${escapeHtml(url)}</a></p>`;
             } else {
                 html += '<p>No URL available</p>';
             }
-            
+
             if (note && note.trim()) {
-                html += `<p><strong>📝 Notes:</strong> ${note}</p>`;
+                html += `<p><strong>📝 Notes:</strong> ${escapeHtml(note)}</p>`;
             }
             
             infoPanel.innerHTML = html;
