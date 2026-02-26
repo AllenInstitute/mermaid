@@ -1076,7 +1076,10 @@
                     landingParts.push('      } else {');
                     landingParts.push('        html += "<p>No URL available</p>";');
                     landingParts.push('      }');
-                    landingParts.push('      if(noteFallback && noteFallback.trim()) { html += "<p><strong>📝 Notes:</strong> " + escapeHtml(noteFallback) + "</p>"; }');
+                    landingParts.push('      if(noteFallback && noteFallback.trim()) {');
+                    landingParts.push('        const formattedNote = escapeHtml(noteFallback).replace(/\\n/g, "<br>").replace(/\\\\n/g, "<br>");');
+                    landingParts.push('        html += "<p><strong>📝 Notes:</strong> " + formattedNote + "</p>";');
+                    landingParts.push('      }');
                     landingParts.push('      infoPanel.innerHTML = html;');
                     landingParts.push('      infoPanel.classList.add("show");');
                     landingParts.push('    }');
